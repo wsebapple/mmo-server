@@ -34,7 +34,7 @@ public class World {
 
     private final Map<Long, Map<Long, EntityView>> lastSent = new HashMap<>();
 
-    private final Map<Integer, Long> occ = new HashMap<>(); // tileKey -> entityId
+    //private final Map<Integer, Long> occ = new HashMap<>(); // tileKey -> entityId
 
     private int key(int x, int y) {
         return (x << 16) ^ (y & 0xFFFF);
@@ -71,7 +71,7 @@ public class World {
                 disconnectedRemainSec.remove(requestedId);
 
                 // 점유/lastSent 보정
-                occ.put(key(Math.round(exist.x), Math.round(exist.y)), exist.id);
+//                occ.put(key(Math.round(exist.x), Math.round(exist.y)), exist.id);
                 lastSent.putIfAbsent(exist.id, new HashMap<>());
                 return exist;
             }
@@ -95,7 +95,7 @@ public class World {
         players.put(id, p);
         lastSent.put(id, new HashMap<>());
 
-        occ.put(key(Math.round(p.x), Math.round(p.y)), p.id);
+//        occ.put(key(Math.round(p.x), Math.round(p.y)), p.id);
         return p;
     }
 
@@ -104,7 +104,7 @@ public class World {
         lastSent.remove(playerId);
 
         if (p != null) {
-            occ.remove(key(Math.round(p.x), Math.round(p.y)));
+//            occ.remove(key(Math.round(p.x), Math.round(p.y)));
         }
     }
 
@@ -118,7 +118,7 @@ public class World {
             int lvl = rollMonsterLevelForSpawn(pos[0], pos[1]);
             Monster m = new Monster(id, pos[0], pos[1], lvl);
             monsters.put(id, m);
-            occ.put(key(Math.round(m.x), Math.round(m.y)), m.id);
+//            occ.put(key(Math.round(m.x), Math.round(m.y)), m.id);
         }
     }
 
@@ -255,7 +255,7 @@ public class World {
                     Leveling.addExpAndLevelUp(p, gain);
 
                     // 점유 해제
-                    occ.remove(key(Math.round(target.x), Math.round(target.y)));
+//                    occ.remove(key(Math.round(target.x), Math.round(target.y)));
 
                     // 상태 초기화
                     target.pathTiles.clear();
@@ -381,7 +381,7 @@ public class World {
                 int newLevel = rollMonsterLevelForSpawn(pos[0], pos[1]);
                 m.resetForRespawn(newLevel);
 
-                occ.put(key(Math.round(m.x), Math.round(m.y)), m.id);
+//                occ.put(key(Math.round(m.x), Math.round(m.y)), m.id);
             }
             it.remove();
         }
@@ -510,13 +510,13 @@ public class World {
         }
 
         int nKey = key(nx, ny);
-        Long blocker = occ.get(nKey);
-        if (blocker != null && blocker != e.id) {
-            return;
-        }
+//        Long blocker = occ.get(nKey);
+//        if (blocker != null && blocker != e.id) {
+//            return;
+//        }
 
-        occ.remove(key(cx, cy));
-        occ.put(nKey, e.id);
+//        occ.remove(key(cx, cy));
+//        occ.put(nKey, e.id);
 
         e.toX = nx;
         e.toY = ny;
@@ -555,8 +555,8 @@ public class World {
             gx = g[0];
             gy = g[1];
 
-            Long occId = occ.get(key(gx, gy));
-            if (occId != null && occId != m.id) continue;
+//            Long occId = occ.get(key(gx, gy));
+//            if (occId != null && occId != m.id) continue;
 
             List<P> path = AStar.findPath(map, cx, cy, gx, gy);
             if (path == null || path.size() <= 1) {
