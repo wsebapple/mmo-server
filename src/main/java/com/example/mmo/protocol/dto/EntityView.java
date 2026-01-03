@@ -8,4 +8,7 @@ public class EntityView {
     public int hp;
     public int maxHp;
     public long targetId; // player only
+    public int level;
+    public float exp;
+    public float expNeed;
 }
