@@ -22,7 +22,7 @@ public class Player extends Entity {
     public void onLevelUp() {
         // 예시: 레벨업 때마다 최대 체력 증가 + 현재 체력 일부 회복
         this.maxHp = 100 + (level - 1) * 10;
-        this.hp = Math.min(this.maxHp, this.hp + 15);
+        this.hp = this.maxHp;
         this.attackDamage = this.attackDamage + 2;
         this.attackRange = this.attackRange + 0.05f;
         this.attackIntervalSec = Math.max(0.25f, this.attackIntervalSec - 0.01f);

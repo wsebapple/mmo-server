@@ -46,10 +46,46 @@ public class World {
 
     private final Outbound outbound;
 
+    // 연결 끊긴 플레이어를 잠깐 살려두는 유예(초)
+    public float disconnectGraceSec = 60f;
+
+    // 끊긴 플레이어: playerId -> 남은 유예 시간
+    private final Map<Long, Float> disconnectedRemainSec = new HashMap<>();
+
     public World(Outbound outbound, ObjectMapper om) {
         this.outbound = outbound;
         this.om = om;
         spawnMonsters();
+    }
+
+    public Player addOrResumePlayer(long requestedId) {
+        // 1) requestedId로 기존 플레이어가 있으면 재사용
+        if (requestedId > 0) {
+            Player exist = players.get(requestedId);
+            if (exist != null) {
+                
+                // 만피
+                exist.hp = exist.maxHp;
+
+                // 끊김 유예 목록에서 제거(재접속)
+                disconnectedRemainSec.remove(requestedId);
+
+                // 점유/lastSent 보정
+                occ.put(key(Math.round(exist.x), Math.round(exist.y)), exist.id);
+                lastSent.putIfAbsent(exist.id, new HashMap<>());
+                return exist;
+            }
+        }
+
+        // 2) 없으면 신규 생성
+        return addPlayer();
+    }
+
+    public void onDisconnect(long playerId) {
+        // 즉시 삭제하지 말고 유예 타이머 등록
+        if (players.containsKey(playerId)) {
+            disconnectedRemainSec.put(playerId, disconnectGraceSec);
+        }
     }
 
     public Player addPlayer() {
@@ -229,7 +265,7 @@ public class World {
                     target.attackCd = 0f;
                     target.repathCd = 0f;
 
-                    maybeSpawnDrop(target.x, target.y);
+                    maybeSpawnDrop(target.x, target.y, target.level);
                     respawnRemainSec.put(target.id, 12f + (float) (Math.random() * 10f));
                 }
             }
@@ -412,6 +448,23 @@ public class World {
                 }
             }
         }
+
+        // 4.8) 연결 끊긴 플레이어 유예 만료 처리
+        if (!disconnectedRemainSec.isEmpty()) {
+            var it1 = disconnectedRemainSec.entrySet().iterator();
+            while (it1.hasNext()) {
+                var e = it1.next();
+                float remain = e.getValue() - dtSec;
+                if (remain > 0f) {
+                    e.setValue(remain);
+                    continue;
+                }
+                long pid = e.getKey();
+                // 유예 끝 -> 진짜 삭제
+                removePlayer(pid);
+                it1.remove();
+            }
+        }
     }
 
     private void moveByPath(Entity e, float dt) {
@@ -519,11 +572,11 @@ public class World {
         }
     }
 
-    private void maybeSpawnDrop(float x, float y) {
+    private void maybeSpawnDrop(float x, float y, int targetLvl) {
         if (Math.random() < 0.65) {
             long id = idGen.incrementAndGet();
             int itemId = (int) (1 + Math.random() * 5);
-            Drop d = new Drop(id, x + 0.3f, y + 0.3f, itemId);
+            Drop d = new Drop(id, x + 0.3f, y + 0.3f, itemId, targetLvl);
             drops.put(d.id, d);
         }
     }
